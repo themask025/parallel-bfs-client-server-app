@@ -3,49 +3,45 @@ import socket
 import threading
 import pickle
 
-
-HEADER = 16
+SERVER = 'localhost'
 PORT = 5050
-SERVER = socket.gethostbyname(socket.gethostname())
 ADDR = (SERVER, PORT)
-FORMAT = 'utf-8'
-DISCONNECT_MESSAGE = "!DISCONNECT"
-
-
-def handle_client(conn, addr):
-
-    print(f"[NEW CONNECTION] {addr} connected.")
-
-    conn.send("Connected!".encode(FORMAT))
-
-    connected = True
-    while connected:
-        msg_length = conn.recv(HEADER).decode(FORMAT)
-        if msg_length:
-            msg_length = int(msg_length)
-            msg = conn.recv(msg_length).decode(FORMAT)
-
-            if msg == DISCONNECT_MESSAGE:
-                connected = False
-            
-            print(f"[{addr}] {msg}")
-            conn.send("Message received!".encode(FORMAT))
-
-    conn.close()
-
-
-def start():
-    server.listen()
-    print(f"[LISTENING] Server is listening on {SERVER}")
-    while True:
-        conn, addr = server.accept()
-        thread = threading.Thread(target=handle_client, args=(conn, addr))
-        thread.start()
-        print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 1}")
-
+FORMAT = ('utf-8')
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(ADDR)
 
-print("[STARTING] server is starting...")
+
+def start():
+    server.listen()
+    print(f"Server is listening on {SERVER}...")
+
+    while True:
+        conn, addr = server.accept()
+        thread = threading.Thread(target=handle_client, args=(conn, addr))
+        thread.start()
+        print(f"Active connections: {threading.active_count() - 1}")
+
+
+def handle_client(conn, addr):
+    print(f"New connection: {addr}")
+
+    connected = True
+    while connected:
+        data = conn.recv(4096)
+        if not data:
+            connected = False
+        else:
+            graph, start_node = pickle.loads(data)
+            result = parallel_bfs(graph, start_node)
+            result = pickle.dumps(result)
+            conn.send(result)
+
+    print(f"Closing connection: {addr}")
+
+
+def parallel_bfs(graph, start_node):
+    return "Traversed graph"
+
+print("Server is starting...")
 start()
