@@ -5,12 +5,12 @@ import pickle
 SERVER = 'localhost'
 PORT = 5050
 ADDR = (SERVER, PORT)
-FORMAT = 'utf-8'
 
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect(ADDR)
 
-graph = {'A': ['B', 'C'], 'B': ['A', 'D', 'E'], 'C': ['A', 'F', 'G']}
+
+graph = {'A': ['B', 'C'], 'B': ['A', 'D', 'E'], 'C': ['A', 'F', 'G'], 'D': [], 'E': [], 'F': [], 'G': [] }
 start_node = 'A'
 
 data = pickle.dumps((graph, start_node))
