@@ -3,9 +3,10 @@ import socket
 import pickle
 import threading
 import multiprocessing
+import timeit
 
 
-SERVER = 'localhost'
+SERVER = socket.gethostbyname(socket.gethostname())
 PORT = 5050
 ADDR = (SERVER, PORT)
 
@@ -33,28 +34,15 @@ def handle_client(conn, addr):
         if not data:
             connected = False
         else:
-            graph, start_node = pickle.loads(data)
+            graph, start_node, num_processes = pickle.loads(data)
             result = parallel_bfs(graph, start_node)
             result = result_to_string(result)
-            result = pickle.dumps(result)
-            conn.send(result)
+            singular_execution_time = timeit.timeit(lambda: parallel_bfs(graph, start_node, 1), number = 1)
+            multi_process_execution_time = timeit.timeit(lambda: parallel_bfs(graph, start_node), number = 1)
+            data = pickle.dumps((result, singular_execution_time, multi_process_execution_time))
+            conn.send(data)
 
     print(f"Closing connection: {addr}")
-
-
-def singular_bfs(graph, start_node):
-    visited = set()
-    queue = [start_node]
-    result = []
-
-    while queue:
-        current_node = queue.pop(0)
-        if current_node not in visited:
-            visited.add(current_node)
-            result.append(current_node)
-            queue.extend(graph[current_node])
-
-    return result
 
 
 def bfs(graph, start, visited, result_queue):
@@ -74,8 +62,10 @@ def bfs(graph, start, visited, result_queue):
                     queue.append(neighbor)
 
 
-def parallel_bfs(graph, start_node):
-    num_processes = multiprocessing.cpu_count()
+def parallel_bfs(graph, start_node, num_processes = -1):
+    if num_processes == -1:
+        num_processes = multiprocessing.cpu_count()
+
     manager = multiprocessing.Manager()
 
     visited = manager.list()
